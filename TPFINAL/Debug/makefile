@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := ADC_GENERADOR
+BUILD_ARTIFACT_NAME := TPFINAL
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-ADC_GENERADOR.elf \
+TPFINAL.elf \
 
 MAP_FILES += \
-ADC_GENERADOR.map \
+TPFINAL.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-ADC_GENERADOR.list \
+TPFINAL.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: ADC_GENERADOR.elf secondary-outputs
+main-build: TPFINAL.elf secondary-outputs
 
 # Tool invocations
-ADC_GENERADOR.elf ADC_GENERADOR.map: $(OBJS) $(USER_OBJS) D:\IDE\ PROYECTOS\ADC_GENERADOR\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "ADC_GENERADOR.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\IDE PROYECTOS\ADC_GENERADOR\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ADC_GENERADOR.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+TPFINAL.elf TPFINAL.map: $(OBJS) $(USER_OBJS) D:\iot\IOT-Receiver\TPFINAL\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "TPFINAL.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\iot\IOT-Receiver\TPFINAL\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TPFINAL.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-ADC_GENERADOR.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "ADC_GENERADOR.list"
+TPFINAL.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "TPFINAL.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) ADC_GENERADOR.elf ADC_GENERADOR.list ADC_GENERADOR.map default.size.stdout
+	-$(RM) TPFINAL.elf TPFINAL.list TPFINAL.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
