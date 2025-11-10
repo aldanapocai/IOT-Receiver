@@ -26,7 +26,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define Tamano 14
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -49,10 +49,13 @@ DMA_HandleTypeDef hdma_dac1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+uint8_t Entrada_RC485[Tamano]={0};
+uint8_t b, prev = 0;
+	  uint8_t frame[14];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,6 +67,7 @@ static void MX_DAC_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 uint32_t Senal_senoidal [Tamano_senal];
@@ -71,7 +75,7 @@ uint32_t Senal_cuadrada [Tamano_senal];
 uint32_t Senal_sierra [Tamano_senal];
 uint32_t Senal_triangular [Tamano_senal];
 uint32_t Dato_adc=0;
-uint32_t ARR1=0;
+uint32_t Amplitud=0;
 
 
 /* USER CODE END PFP */
@@ -79,58 +83,50 @@ uint32_t ARR1=0;
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void Crear_Senal(void){
+
+	uint32_t i;
+	for(i=0;i<Tamano_senal;i++)
+	Senal_senoidal [i] = (sin(2 * M_PI * i / Tamano_senal) +1 ) * (float) (4095 / 2);// Este 4095/2 es para escalarla con el dac
+	// cuando es 2 el seno me da 4095, cuando es 1 me da 2048 y cuando es cero me da cero y asi le sumo la continua.
+
+	for(i=0;i<Tamano_senal/2;i++){
+		Senal_cuadrada[i] = (float) 4095;
+		Senal_cuadrada[i+30] = (float) 0;
+	}
+
+	for (int i = 0; i < Tamano_senal; i++) {
+	    if (i < Tamano_senal / 2) {
+	        // Rampa ascendente
+	        Senal_triangular[i] = (2.0f * i / Tamano_senal) * (float)4095.0f;
+	    } else {
+	        // Rampa descendente
+	        Senal_triangular[i] = (2.0f * (Tamano_senal - i) / Tamano_senal) *(float) 4095.0f;
+	    }
+	}
+
+
+	for (int i = 0; i < Tamano_senal; i++) {
+
+		Senal_sierra[i] = ((float)i / Tamano_senal) * 4095.0f;
+	}
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 
 	if (htim->Instance == TIM3){
-		ARR1 = (int32_t) (-2.025 * (float) Dato_adc + (float) 8333);//Primero hace la cuenta y despues castea
-	__HAL_TIM_SET_AUTORELOAD(&htim2,ARR1);
+		Amplitud = (int32_t) (-2.025 * (float) Dato_adc + (float) 8333);//Primero hace la cuenta y despues castea
+	__HAL_TIM_SET_AUTORELOAD(&htim2,Amplitud);
+	Crear_Senal();
 
 	}
 }
 
 
-
+//ESTO LO CAMBIAMOS
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{/*
-	static uint32_t Tipo_Senal = 0;
-
-	if(GPIO_Pin == B1_Pin){
-
-	  if(Tipo_Senal == 0){
-
-		  	  HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
-		  	  HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, Senal_senoidal, Tamano_senal, DAC_ALIGN_12B_R);
-	  }
-
-	  if(Tipo_Senal == 1){
-
-		  HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
-		  HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, Senal_cuadrada, Tamano_senal, DAC_ALIGN_12B_R);
-
-		  }
-
-	  if(Tipo_Senal == 2){
-
-		  HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
-			  HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, Senal_sierra, Tamano_senal, DAC_ALIGN_12B_R);
-
-
-		  }
-
-	  if(Tipo_Senal == 3){
-
-		  HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
-			  HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, Senal_triangular, Tamano_senal, DAC_ALIGN_12B_R);
-
-		  }
-
-
-  }
-  Tipo_Senal++;
-  Tipo_Senal %= 4;
-
-*/
+{
 	static uint32_t Tipo_Senal = 0;
 	if(GPIO_Pin == B1_Pin){
 		 if(Tipo_Senal == 0){
@@ -162,34 +158,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 
 
-void Crear_Senal(void){
 
-	uint32_t i;
-	for(i=0;i<Tamano_senal;i++)
-	Senal_senoidal [i] = (sin(2 * M_PI * i / Tamano_senal) +1 ) * (float) (4095 / 2);// Este 4095/2 es para escalarla con el dac
-	// cuando es 2 el seno me da 4095, cuando es 1 me da 2048 y cuando es cero me da cero y asi le sumo la continua.
-
-	for(i=0;i<Tamano_senal/2;i++){
-		Senal_cuadrada[i] = (float) 4095;
-		Senal_cuadrada[i+30] = (float) 0;
-	}
-
-	for (int i = 0; i < Tamano_senal; i++) {
-	    if (i < Tamano_senal / 2) {
-	        // Rampa ascendente
-	        Senal_triangular[i] = (2.0f * i / Tamano_senal) * (float)4095.0f;
-	    } else {
-	        // Rampa descendente
-	        Senal_triangular[i] = (2.0f * (Tamano_senal - i) / Tamano_senal) *(float) 4095.0f;
-	    }
-	}
-
-
-	for (int i = 0; i < Tamano_senal; i++) {
-
-		Senal_sierra[i] = ((float)i / Tamano_senal) * 4095.0f;
-	}
-}
 /* USER CODE END 0 */
 
 /**
@@ -227,6 +196,7 @@ int main(void)
   MX_TIM2_Init();
   MX_ADC1_Init();
   MX_TIM3_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   Crear_Senal();
   HAL_TIM_Base_Start(&htim2);
@@ -237,12 +207,37 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+ //
   while (1)
   {
+
+	  HAL_UART_Receive(&huart1, Entrada_RC485, sizeof(Entrada_RC485), HAL_MAX_DELAY);
+	  if(Entrada_RC485[0] == 0xAA && Entrada_RC485[1] == 0x55 && Entrada_RC485[12]  == 0x55 && Entrada_RC485[13]==0xAA)
+		  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	  //HAL_Delay(1000);
+
+
+
+	  // suponer frame de 14 bytes fijo
+
+
+	  // buscar SOF (0xAA 0x55)
+
+
+
+
+}
+
+
+
+
+
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+
   /* USER CODE END 3 */
 }
 
@@ -476,6 +471,39 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -491,7 +519,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -547,7 +575,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -555,12 +583,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pin : LED_Pin */
+  GPIO_InitStruct.Pin = LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
