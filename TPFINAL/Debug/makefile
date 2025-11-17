@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := TPFINAL
+BUILD_ARTIFACT_NAME := Proyecto_RS485
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-TPFINAL.elf \
+Proyecto_RS485.elf \
 
 MAP_FILES += \
-TPFINAL.map \
+Proyecto_RS485.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-TPFINAL.list \
+Proyecto_RS485.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: TPFINAL.elf secondary-outputs
+main-build: Proyecto_RS485.elf secondary-outputs
 
 # Tool invocations
-TPFINAL.elf TPFINAL.map: $(OBJS) $(USER_OBJS) D:\iot\IOT-Receiver\TPFINAL\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "TPFINAL.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\iot\IOT-Receiver\TPFINAL\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TPFINAL.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Proyecto_RS485.elf Proyecto_RS485.map: $(OBJS) $(USER_OBJS) C:\Users\carlo\STM32CubeIDE\workspace_1.18.0\Proyecto_RS485\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Proyecto_RS485.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\carlo\STM32CubeIDE\workspace_1.18.0\Proyecto_RS485\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Proyecto_RS485.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-TPFINAL.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "TPFINAL.list"
+Proyecto_RS485.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Proyecto_RS485.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) TPFINAL.elf TPFINAL.list TPFINAL.map default.size.stdout
+	-$(RM) Proyecto_RS485.elf Proyecto_RS485.list Proyecto_RS485.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
